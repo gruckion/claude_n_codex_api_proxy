@@ -2,8 +2,9 @@
 from typing import Dict, List, Optional
 from datetime import datetime
 from anthropic.types import Message, TextBlock, Usage
-from claude_code_client import ClaudeCodeClient
-from utils import (
+
+from .claude_code_client import ClaudeCodeClient
+from .utils import (
     run_subprocess,
     run_subprocess_async,
     CLINotFoundError,

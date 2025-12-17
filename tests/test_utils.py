@@ -1,6 +1,6 @@
 import pytest
-import utils
-from utils import (
+from claude_codex_proxy import utils
+from claude_codex_proxy.utils import (
     run_subprocess,
     run_subprocess_async,
     CLINotFoundError,

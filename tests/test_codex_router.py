@@ -1,8 +1,8 @@
 """Simple tests for Codex routing"""
-from anthropic_router import create_client
-from codex_client import CodexClient
-from openai_router import AsyncOpenAIRouter, OpenAIRouter
 import pytest
+from claude_codex_proxy.anthropic_router import create_client
+from claude_codex_proxy.codex_client import CodexClient
+from claude_codex_proxy.openai_router import AsyncOpenAIRouter, OpenAIRouter
 
 
 def test_codex_detection():

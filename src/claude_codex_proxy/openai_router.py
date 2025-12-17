@@ -6,8 +6,9 @@ from typing import Any, Dict, List, Optional, Union
 from openai import OpenAI, AsyncOpenAI
 from anthropic.types import Message, MessageParam, TextBlock, Usage
 from anthropic._types import NOT_GIVEN, NotGiven
-from codex_client import CodexClient
-from utils import is_all_nines_api_key
+
+from .codex_client import CodexClient
+from .utils import is_all_nines_api_key
 
 
 def _normalize_content(content: Any) -> str:
