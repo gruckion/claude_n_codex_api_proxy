@@ -2,7 +2,8 @@
 from typing import Dict, List, Optional
 from datetime import datetime
 from anthropic.types import Message, TextBlock, Usage
-from utils import (
+
+from .utils import (
     run_subprocess,
     run_subprocess_async,
     CLINotFoundError,
@@ -16,20 +17,20 @@ class ClaudeCodeClient:
     Client that interfaces with Claude Code CLI for local inference.
     Converts Anthropic API format to Claude Code CLI format and back.
     """
-    
+
     def __init__(self):
         self.claude_command = "claude"
-    
+
     def _format_messages_for_claude(self, messages: List[Dict], system: Optional[str] = None) -> str:
         """
         Format messages into a single prompt for Claude Code CLI.
         """
         prompt_parts = []
-        
+
         # Add system prompt if provided
         if system:
             prompt_parts.append(f"System: {system}\n")
-        
+
         # Format conversation history
         for msg in messages:
             if isinstance(msg, dict):
@@ -53,27 +54,27 @@ class ClaudeCodeClient:
                         else:
                             text_parts.append(str(part))
                 content = " ".join(text_parts)
-            
+
             if role == "user":
                 prompt_parts.append(f"Human: {content}")
             elif role == "assistant":
                 prompt_parts.append(f"Assistant: {content}")
-        
+
         # Join all parts
         full_prompt = "\n\n".join(prompt_parts)
-        
+
         # Add final Human/Assistant markers if needed
         if not full_prompt.strip().endswith("Assistant:"):
             full_prompt += "\n\nAssistant:"
-        
+
         return full_prompt
-    
+
     def _call_claude_cli(self, prompt: str, model: Optional[str] = None) -> str:
         """
         Call Claude Code CLI with the formatted prompt.
         """
         cmd = [self.claude_command, "--print"]
-        
+
         # Add model selection if specified and supported
         if model:
             # Map common model names to Claude Code equivalents
@@ -84,7 +85,7 @@ class ClaudeCodeClient:
                 "claude-3-5-sonnet-20241022": "sonnet",
                 "claude-3-5-haiku-20241022": "haiku"
             }
-            
+
             # Extract model name if it's a full model ID
             for full_name, short_name in model_map.items():
                 if full_name in model:
@@ -95,12 +96,12 @@ class ClaudeCodeClient:
                 if any(name in model.lower() for name in ["opus", "sonnet", "haiku"]):
                     model_short = next((name for name in ["opus", "sonnet", "haiku"] if name in model.lower()), "sonnet")
                     cmd.extend(["--model", model_short])
-        
+
         try:
             return run_subprocess(cmd, prompt, "Claude Code")
         except (CLINotFoundError, CLITimeoutError, CLIError):
             raise
-    
+
     def create_message(
         self,
         messages: List[Dict],
@@ -116,13 +117,13 @@ class ClaudeCodeClient:
         """
         if stream:
             raise NotImplementedError("Streaming is not yet supported with Claude Code routing")
-        
+
         # Format the prompt for Claude Code
         prompt = self._format_messages_for_claude(messages, system)
-        
+
         # Call Claude Code CLI
         response_text = self._call_claude_cli(prompt, model)
-        
+
         # Create a Message object that matches Anthropic's format
         message = Message(
             id="msg_claude_code_" + datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -139,9 +140,9 @@ class ClaudeCodeClient:
                 cache_read_input_tokens=None
             )
         )
-        
+
         return message
-    
+
     async def acreate_message(
         self,
         messages: List[Dict],
@@ -156,10 +157,10 @@ class ClaudeCodeClient:
         """
         if stream:
             raise NotImplementedError("Streaming is not yet supported with Claude Code routing")
-        
+
         # Format the prompt for Claude Code
         prompt = self._format_messages_for_claude(messages, system)
-        
+
         # Call Claude Code CLI asynchronously
         cmd = [self.claude_command, "--print"]
 
@@ -189,7 +190,7 @@ class ClaudeCodeClient:
             response_text = await run_subprocess_async(cmd, prompt, "Claude Code")
         except (CLINotFoundError, CLITimeoutError, CLIError):
             raise
-        
+
         # Create a Message object that matches Anthropic's format
         message = Message(
             id="msg_claude_code_" + datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -206,5 +207,5 @@ class ClaudeCodeClient:
                 cache_read_input_tokens=None
             )
         )
-        
+
         return message

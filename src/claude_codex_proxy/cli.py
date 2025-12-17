@@ -5,6 +5,13 @@ import asyncio
 import logging
 import shutil
 import sys
+import os
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 
 def command_exists(cmd: str) -> bool:
     """Check if a command exists on PATH."""
@@ -12,26 +19,17 @@ def command_exists(cmd: str) -> bool:
 
 
 def ensure_dependencies() -> None:
-    """Verify required dependencies are available, installing if needed."""
+    """Verify required dependencies are available."""
     if not command_exists("claude"):
         print("⚠️  Warning: Claude Code CLI not found; local routing will fail.")
     if not command_exists("codex"):
         print("⚠️  Warning: Codex CLI not found; codex routing will fail.")
 
-    try:
-        import mitmproxy  # noqa: F401
-    except Exception:
-        import subprocess
-
-        print("Installing Python dependencies...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Anthropic API Proxy Server Launcher")
-    parser.add_argument("--host", default="127.0.0.1")
-    parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--host", default=os.environ.get("PROXY_HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PROXY_PORT", "8080")))
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
     parser.add_argument(
         "--allowed-paths",
@@ -47,12 +45,12 @@ def main() -> None:
 
     ensure_dependencies()
 
-    import proxy_server
+    from . import proxy_server
 
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    override = args.allowed_paths
+    override = args.allowed_paths or os.environ.get("ALLOWED_PATHS")
     if override:
         patterns = [p.strip() for p in override.split(",") if p.strip()]
     else:

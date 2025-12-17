@@ -6,8 +6,9 @@ from typing import Any, Dict, List, Optional, Union
 from anthropic import Anthropic, AsyncAnthropic
 from anthropic.types import Message, MessageParam
 from anthropic._types import NOT_GIVEN, NotGiven
-from claude_code_client import ClaudeCodeClient
-from utils import is_all_nines_api_key
+
+from .claude_code_client import ClaudeCodeClient
+from .utils import is_all_nines_api_key
 
 
 class AnthropicRouter:
@@ -15,16 +16,16 @@ class AnthropicRouter:
     A wrapper around the Anthropic client that routes to Claude Code
     when the API key is all 9s, otherwise uses the standard Anthropic API.
     """
-    
+
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self._is_claude_code_mode = is_all_nines_api_key(self.api_key)
-        
+
         if self._is_claude_code_mode:
             self.client = ClaudeCodeClient()
         else:
             self.client = Anthropic(api_key=self.api_key)
-    
+
     @property
     def messages(self):
         """Return a messages interface that mimics Anthropic's API."""
@@ -33,11 +34,11 @@ class AnthropicRouter:
 
 class MessagesRouter:
     """Routes message creation requests to appropriate backend."""
-    
+
     def __init__(self, router: AnthropicRouter):
         self.router = router
         self.is_claude_code = router._is_claude_code_mode
-    
+
     def create(
         self,
         *,
@@ -87,16 +88,16 @@ class AsyncAnthropicRouter:
     """
     Async version of the AnthropicRouter for async operations.
     """
-    
+
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY", "")
         self._is_claude_code_mode = is_all_nines_api_key(self.api_key)
-        
+
         if self._is_claude_code_mode:
             self.client = ClaudeCodeClient()
         else:
             self.client = AsyncAnthropic(api_key=self.api_key)
-    
+
     @property
     def messages(self):
         """Return a messages interface that mimics Anthropic's API."""
@@ -105,11 +106,11 @@ class AsyncAnthropicRouter:
 
 class AsyncMessagesRouter:
     """Async routes message creation requests to appropriate backend."""
-    
+
     def __init__(self, router: AsyncAnthropicRouter):
         self.router = router
         self.is_claude_code = router._is_claude_code_mode
-    
+
     async def create(
         self,
         *,
@@ -183,6 +184,6 @@ def create_client(
         )
 
     if selected in {"codex", "openai"}:
-        from openai_router import OpenAIRouter
+        from .openai_router import OpenAIRouter
         return OpenAIRouter(api_key=api_key)
     return AnthropicRouter(api_key=api_key)

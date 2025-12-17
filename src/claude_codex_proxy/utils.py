@@ -1,6 +1,34 @@
+"""Common utilities for CLI subprocess management and API key detection."""
+
 import asyncio
+import os
 import subprocess
+from pathlib import Path
 from typing import Optional, List
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+# Search in current directory and parent directories
+_env_loaded = False
+
+
+def load_env():
+    """Load environment variables from .env file if not already loaded."""
+    global _env_loaded
+    if not _env_loaded:
+        # Try current directory first, then parent directories
+        env_path = Path.cwd() / ".env"
+        if env_path.exists():
+            load_dotenv(env_path)
+        else:
+            # Try to find .env in parent directories
+            load_dotenv()
+        _env_loaded = True
+
+
+# Load env on module import
+load_env()
 
 
 class CLIError(Exception):

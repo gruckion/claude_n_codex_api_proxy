@@ -1,6 +1,6 @@
 import json
 import pytest
-import proxy_server
+from claude_codex_proxy import proxy_server
 
 DEFAULT_REGEX = proxy_server.build_allowed_paths_regex(
     proxy_server.DEFAULT_ALLOWED_PATH_PATTERNS

@@ -14,9 +14,9 @@ from pathlib import Path
 def check_dependencies():
     """Check if required dependencies are installed."""
     print("🔍 Checking dependencies...")
-    
+
     missing = []
-    
+
     # Check for Claude CLI
     try:
         subprocess.run(['claude', '--version'], capture_output=True, check=True)
@@ -24,7 +24,7 @@ def check_dependencies():
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("  ❌ Claude Code CLI not found")
         missing.append("claude")
-    
+
     # Check for Python packages
     try:
         import mitmproxy
@@ -32,25 +32,30 @@ def check_dependencies():
     except ImportError:
         print("  ❌ mitmproxy not installed")
         missing.append("mitmproxy")
-    
+
     try:
         import anthropic
         print("  ✅ anthropic package installed")
     except ImportError:
         print("  ❌ anthropic package not installed")
         missing.append("anthropic")
-    
+
     return missing
 
 
 def install_dependencies():
     """Install missing dependencies."""
     print("\n📦 Installing dependencies...")
-    
-    # Install Python packages
-    subprocess.run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], check=True)
-    print("  ✅ Python packages installed")
-    
+
+    # Install Python packages using uv
+    try:
+        subprocess.run(["uv", "sync"], check=True)
+        print("  ✅ Python packages installed")
+    except FileNotFoundError:
+        # Fall back to pip if uv is not available
+        subprocess.run([sys.executable, '-m', 'pip', 'install', '-e', '.'], check=True)
+        print("  ✅ Python packages installed (via pip)")
+
     # Check if Claude CLI needs installation
     try:
         subprocess.run(['claude', '--version'], capture_output=True, check=True)
@@ -65,9 +70,9 @@ def generate_certificates():
     """Generate SSL certificates for HTTPS interception."""
     cert_dir = Path.home() / '.mitmproxy'
     cert_dir.mkdir(exist_ok=True)
-    
+
     print("\n🔐 Setting up SSL certificates...")
-    
+
     # Check if mitmproxy CA certificate already exists
     ca_cert = cert_dir / 'mitmproxy-ca-cert.pem'
     if ca_cert.exists():
@@ -127,11 +132,11 @@ def generate_certificates():
 def print_configuration_instructions():
     """Print instructions for configuring different tools and platforms."""
     system = platform.system()
-    
+
     print("\n" + "=" * 60)
     print("📋 CONFIGURATION INSTRUCTIONS")
     print("=" * 60)
-    
+
     print("\n1️⃣  ENVIRONMENT VARIABLES (Universal Method):")
     print("-" * 40)
     print("Add these to your shell config or set before running commands:")
@@ -140,23 +145,23 @@ def print_configuration_instructions():
     print("  export HTTPS_PROXY=http://localhost:8080")
     print("  export ANTHROPIC_API_KEY=999999999999  # All 9s for Claude Code")
     print()
-    
+
     print("\n2️⃣  LANGUAGE-SPECIFIC CONFIGURATION:")
     print("-" * 40)
-    
+
     print("\n🐍 Python:")
     print("  import os")
     print("  os.environ['HTTP_PROXY'] = 'http://localhost:8080'")
     print("  os.environ['HTTPS_PROXY'] = 'http://localhost:8080'")
     print("  os.environ['ANTHROPIC_API_KEY'] = '999999999999'")
     print()
-    
+
     print("\n📦 Node.js:")
     print("  process.env.HTTP_PROXY = 'http://localhost:8080';")
     print("  process.env.HTTPS_PROXY = 'http://localhost:8080';")
     print("  process.env.ANTHROPIC_API_KEY = '999999999999';")
     print()
-    
+
     print("\n🔧 cURL:")
     print("  curl -x http://localhost:8080 \\")
     print("    https://api.anthropic.com/v1/messages \\")
@@ -164,11 +169,11 @@ def print_configuration_instructions():
     print("    -H 'content-type: application/json' \\")
     print("    -d '{...}'")
     print()
-    
+
     print("\n3️⃣  SSL/HTTPS SETUP:")
     print("-" * 40)
     cert_dir = Path.home() / '.mitmproxy'
-    
+
     if system == "Darwin":  # macOS
         print("macOS - Add certificate to Keychain:")
         print(f"  sudo security add-trusted-cert -d -r trustRoot \\")
@@ -184,7 +189,7 @@ def print_configuration_instructions():
         print(f"  1. Open {cert_dir}\\mitmproxy-ca-cert.pem")
         print(f"  2. Install Certificate → Local Machine")
         print(f"  3. Place in 'Trusted Root Certification Authorities'")
-    
+
     print("\n4️⃣  BROWSER CONFIGURATION:")
     print("-" * 40)
     print("Firefox:")
@@ -194,7 +199,7 @@ def print_configuration_instructions():
     print()
     print("Chrome/Edge:")
     print("  Use system proxy settings (set via environment variables)")
-    
+
     print("\n5️⃣  DISABLE PROXY:")
     print("-" * 40)
     print("To disable the proxy and use Anthropic API directly:")
@@ -205,8 +210,8 @@ def print_configuration_instructions():
 
 def create_test_script():
     """Create a simple test script to verify the proxy works."""
-    test_script = """#!/usr/bin/env python3
-\"\"\"Test script to verify proxy configuration.\"\"\"
+    test_script = '''#!/usr/bin/env python3
+"""Test script to verify proxy configuration."""
 import os
 import requests
 
@@ -235,8 +240,8 @@ if response.status_code == 200:
     print("✅ Success! Response:", response.json()['content'][0]['text'])
 else:
     print("❌ Failed:", response.status_code, response.text)
-"""
-    
+'''
+
     with open('test_proxy.py', 'w') as f:
         f.write(test_script)
     os.chmod('test_proxy.py', 0o755)
@@ -247,10 +252,10 @@ def main():
     """Main setup process."""
     print("🚀 ANTHROPIC API PROXY SETUP")
     print("=" * 60)
-    
+
     # Check dependencies
     missing = check_dependencies()
-    
+
     if missing:
         print(f"\n⚠️  Missing dependencies: {', '.join(missing)}")
         response = input("Install missing dependencies? (y/n): ")
@@ -259,21 +264,21 @@ def main():
         else:
             print("Please install dependencies manually before running the proxy.")
             sys.exit(1)
-    
+
     # Generate certificates
     cert_dir = generate_certificates()
-    
+
     # Print configuration instructions
     print_configuration_instructions()
-    
+
     # Create test script
     create_test_script()
-    
+
     print("\n" + "=" * 60)
     print("✅ SETUP COMPLETE!")
     print("=" * 60)
     print("\nNext steps:")
-    print("1. Start the proxy: ./start_proxy.sh or python proxy_server.py")
+    print("1. Start the proxy: uv run poe start")
     print("2. Configure your environment (see instructions above)")
     print("3. Test with: python test_proxy.py")
     print("\nAPI keys with all 9s will route to Claude Code")

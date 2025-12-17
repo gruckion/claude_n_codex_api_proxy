@@ -1,12 +1,16 @@
 """Codex Proxy Handler - Handles API requests routed through the proxy for Codex CLI."""
 from typing import Any, Dict, Optional
-from claude_code_proxy_handler import ClaudeCodeProxyHandler, MAX_PROMPT_LENGTH, logger
-from utils import (
+import logging
+
+from .claude_code_proxy_handler import ClaudeCodeProxyHandler, MAX_PROMPT_LENGTH
+from .utils import (
     run_subprocess_async,
     CLINotFoundError,
     CLITimeoutError,
     CLIError,
 )
+
+logger = logging.getLogger(__name__)
 
 CODEX_VALID_MODELS = {
     "code-davinci-002",

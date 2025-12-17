@@ -1,14 +1,16 @@
-import proxy_server
+from claude_codex_proxy import proxy_server
 
 DEFAULT_REGEX = proxy_server.build_allowed_paths_regex(
     proxy_server.DEFAULT_ALLOWED_PATH_PATTERNS
 )
+
 
 class DummyRequest:
     def __init__(self, path, method="POST", content=b""):
         self.path = path
         self.method = method
         self.content = content
+
 
 class DummyFlow:
     def __init__(self, path, method="POST", content=b""):
